@@ -1,0 +1,2756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RabbitMQ 消息队列完全教程</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --accent: #45B7D1;
+            --dark: #2C3E50;
+            --light: #ECF0F1;
+            --code-bg: #1E1E1E;
+            --success: #27AE60;
+            --warning: #F39C12;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 60px 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: var(--dark);
+            margin-bottom: 15px;
+        }
+
+        .header .rabbit-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .badge-python { background: #3776AB; color: white; }
+        .badge-rabbitmq { background: #FF6600; color: white; }
+        .badge-interactive { background: var(--success); color: white; }
+
+        /* Table of Contents */
+        .toc {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .toc h2 {
+            color: var(--dark);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .toc-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .toc-list a {
+            display: block;
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            color: var(--dark);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .toc-list a:hover {
+            background: #e9ecef;
+            border-left-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        /* Chapter */
+        .chapter {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .chapter:hover {
+            transform: translateY(-5px);
+        }
+
+        .chapter-header {
+            padding: 25px 30px;
+            background: linear-gradient(135deg, var(--primary) 0%, #ff8e8e 100%);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chapter-header h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .chapter-toggle {
+            width: 30px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .chapter.active .chapter-toggle {
+            transform: rotate(180deg);
+        }
+
+        .chapter-content {
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .chapter.active .chapter-content {
+            padding: 30px;
+            max-height: 10000px;
+        }
+
+        .chapter-content h3 {
+            color: var(--dark);
+            margin: 25px 0 15px;
+            font-size: 1.2rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .chapter-content h3:first-child {
+            margin-top: 0;
+        }
+
+        .chapter-content p {
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .concept-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .concept-box h4 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .analogy-box {
+            background: #FFF9E6;
+            border-left: 4px solid #F39C12;
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+        }
+
+        .analogy-box h4 {
+            color: #D68910;
+            margin-bottom: 10px;
+        }
+
+        .diagram {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            border: 1px solid #e9ecef;
+        }
+
+        .diagram .label {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .diagram .arrow {
+            color: #aaa;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .comparison-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg) !important;
+            border-radius: 12px !important;
+            margin: 15px 0 !important;
+            padding: 20px !important;
+            overflow-x: auto;
+            font-size: 0.9rem !important;
+            line-height: 1.6 !important;
+        }
+
+        code {
+            font-family: 'Fira Code', 'Monaco', 'Menlo', monospace !important;
+        }
+
+        .code-title {
+            background: #3d3d3d;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 12px 12px 0 0;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .code-title .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-title .dot.red { background: #FF5F56; }
+        .code-title .dot.yellow { background: #FFBD2E; }
+        .code-title .dot.green { background: #27CA40; }
+
+        pre[class*="language-"] {
+            margin: 0 !important;
+            border-radius: 0 0 12px 12px !important;
+        }
+
+        .copy-btn {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        pre:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .output-block {
+            background: #2d2d2d;
+            color: #a9b7c6;
+            padding: 15px 20px;
+            border-radius: 0 0 12px 12px;
+            font-family: 'Monaco', monospace;
+            font-size: 0.9rem;
+            margin-top: -12px;
+            border-top: 1px solid #3d3d3d;
+        }
+
+        /* Interactive Elements */
+        .interactive-demo {
+            background: linear-gradient(135deg, var(--success) 0%, #2ECC71 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .interactive-demo h4 {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .demo-btn {
+            padding: 10px 20px;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .demo-btn:hover {
+            background: white;
+            color: var(--success);
+        }
+
+        .demo-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .demo-output {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Monaco', monospace;
+            font-size: 0.9rem;
+            min-height: 100px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .demo-output .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .demo-output .producer { color: #61DAFB; }
+        .demo-output .consumer { color: #98FB98; }
+        .demo-output .system { color: #FFD93D; }
+
+        /* Scenario Cards */
+        .scenario-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .scenario-card h4 {
+            color: var(--dark);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .scenario-card .icon {
+            font-size: 1.5rem;
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .flow-diagram .step {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .flow-diagram .arrow {
+            color: #aaa;
+            font-size: 1.2rem;
+        }
+
+        /* FAQ Section */
+        .faq-item {
+            border: 1px solid #eee;
+            border-radius: 12px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            font-weight: 600;
+            color: var(--dark);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-answer {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item.active .faq-answer {
+            padding: 20px;
+            max-height: 500px;
+        }
+
+        /* Summary Box */
+        .summary-box {
+            background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .summary-box h4 {
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .summary-list {
+            list-style: none;
+        }
+
+        .summary-list li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .summary-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #90EE90;
+        }
+
+        /* Architecture Diagram */
+        .arch-diagram {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            color: white;
+            font-family: 'Monaco', monospace;
+        }
+
+        .arch-diagram .box {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            margin: 10px;
+        }
+
+        .arch-diagram .producer { border-color: #61DAFB; }
+        .arch-diagram .exchange { border-color: #FF6B6B; }
+        .arch-diagram .queue { border-color: #98FB98; }
+        .arch-diagram .consumer { border-color: #FFD93D; }
+
+        .arch-diagram .row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* Checklist */
+        .checklist {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .checklist h4 {
+            color: var(--dark);
+            margin-bottom: 15px;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            cursor: pointer;
+        }
+
+        .check-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Scroll to top */
+        .scroll-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .scroll-top.visible {
+            opacity: 1;
+        }
+
+        .scroll-top:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8rem; }
+            .chapter-header h2 { font-size: 1.1rem; }
+            pre { font-size: 0.85rem !important; }
+            .flow-diagram { flex-direction: column; }
+            .flow-diagram .arrow { transform: rotate(90deg); }
+        }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Print styles */
+        @media print {
+            body { background: white; }
+            .chapter { break-inside: avoid; }
+            .scroll-top, .progress-container { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <button class="scroll-top" id="scrollTop" onclick="scrollToTop()">↑</button>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="rabbit-icon">🐇</div>
+            <h1>RabbitMQ 消息队列完全教程</h1>
+            <p>从零开始学习消息队列，掌握 RabbitMQ 实战技能</p>
+            <div class="badges">
+                <span class="badge badge-python">Python</span>
+                <span class="badge badge-rabbitmq">RabbitMQ</span>
+                <span class="badge badge-interactive">交互式学习</span>
+            </div>
+        </header>
+
+        <!-- Table of Contents -->
+        <nav class="toc">
+            <h2>📚 目录导航</h2>
+            <ul class="toc-list">
+                <li><a href="#ch1">第一章：什么是消息队列？</a></li>
+                <li><a href="#ch2">第二章：核心概念详解</a></li>
+                <li><a href="#ch3">第三章：安装和连接</a></li>
+                <li><a href="#ch4">第四章：生产者与消费者</a></li>
+                <li><a href="#ch5">第五章：工作队列</a></li>
+                <li><a href="#ch6">第六章：交换机</a></li>
+                <li><a href="#ch7">第七章：主题交换机</a></li>
+                <li><a href="#ch8">第八章：实战项目</a></li>
+                <li><a href="#ch9">第九章：最佳实践</a></li>
+            </ul>
+        </nav>
+
+        <!-- Chapter 1: What is Message Queue -->
+        <section class="chapter active" id="ch1">
+            <div class="chapter-header" onclick="toggleChapter(this)">
+                <h2>📖 第一章：什么是消息队列？为什么要用它？</h2>
+                <div class="chapter-toggle">▼</div>
+            </div>
+            <div class="chapter-content">
+                <h3>🤔 先思考一个问题</h3>
+                <p>想象你在一家餐厅点餐：</p>
+
+                <div class="scenario-card">
+                    <h4><span class="icon">❌</span> 没有消息队列的情况</h4>
+                    <div class="flow-diagram">
+                        <div class="step">你说话</div>
+                        <span class="arrow">→</span>
+                        <div class="step">服务员去厨房盯着</div>
+                        <span class="arrow">→</span>
+                        <div class="step">等厨师做完</div>
+                        <span class="arrow">→</span>
+                        <div class="step">服务员端给你</div>
+                    </div>
+                    <p><strong>问题在哪？</strong></p>
+                    <ul>
+                        <li>服务员要一直等着，不能做其他事</li>
+                        <li>如果客人很多，服务员忙不过来</li>
+                        <li>如果厨师做菜很慢，所有人都在等</li>
+                    </ul>
+                </div>
+
+                <div class="scenario-card">
+                    <h4><span class="icon">✅</span> 有消息队列的情况</h4>
+                    <div class="flow-diagram">
+                        <div class="step">交给前台收银</div>
+                        <span class="arrow">→</span>
+                        <div class="step">收银员继续接待</div>
+                        <span class="arrow">↓</span>
+                        <div class="step">厨房排队做菜</div>
+                        <span class="arrow">↓</span>
+                        <div class="step">通知你来取</div>
+                    </div>
+                    <p>这样前台可以同时接待很多人，厨房有条不紊地工作。</p>
+                </div>
+
+                <h3>💡 什么是消息队列？</h3>
+                <div class="concept-box">
+                    <h4>📦 消息队列（Message Queue）</h4>
+                    <p>就像餐厅的前台收银系统：你把"订单"（消息）交给队列，队列会按顺序保存，厨师（消费者）可以从队列中取出订单来处理。</p>
+                </div>
+
+                <h4>核心特点：</h4>
+                <ul>
+                    <li><strong>🔗 解耦：</strong>发送者和接收者不需要知道对方的存在</li>
+                    <li><strong>⚡ 异步：</strong>发送消息后可以立即返回，不用等待处理完成</li>
+                    <li><strong>📊 削峰填谷：</strong>高峰期积累的请求会慢慢被处理，不会系统崩溃</li>
+                    <li><strong>💪 可靠性：</strong>消息会持久保存，不会丢失</li>
+                </ul>
+
+                <h3>🏢 什么时候需要消息队列？</h3>
+
+                <div class="scenario-card">
+                    <h4><span class="icon">📧</span> 场景1：用户注册后发送欢迎邮件</h4>
+                    <div class="analogy-box">
+                        <h4>🤔 没有队列</h4>
+                        <p>用户注册 → 系统注册 → 发送邮件 → 返回成功<br>
+                        <em style="color: #c0392b;">如果邮件服务器慢，用户要等很久</em></p>
+                    </div>
+                    <div class="concept-box">
+                        <h4>✅ 有队列</h4>
+                        <p>用户注册 → 系统注册 → 发到队列 → 立即返回"注册成功"<br>
+                        <em>后台发送邮件（用户无感知等待）</em></p>
+                    </div>
+                </div>
+
+                <div class="scenario-card">
+                    <h4><span class="icon">📷</span> 场景2：处理大量图片上传</h4>
+                    <p><strong>没有队列：</strong>用户上传100张图片 → 系统一张张处理 → 用户等待5分钟</p>
+                    <p><strong>有队列：</strong>图片进入队列 → 立即返回"上传成功" → 5个后台worker同时处理 → 1分钟完成</p>
+                </div>
+
+                <h3>📊 消息队列 vs 直接调用</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>对比项</th>
+                            <th>直接调用</th>
+                            <th>消息队列</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>耦合度</td>
+                            <td>高（紧密耦合）</td>
+                            <td>低（通过队列通信）</td>
+                        </tr>
+                        <tr>
+                            <td>性能</td>
+                            <td>同步等待</td>
+                            <td>异步处理</td>
+                        </tr>
+                        <tr>
+                            <td>可靠性</td>
+                            <td>失败即失败</td>
+                            <td>可以重试</td>
+                        </tr>
+                        <tr>
+                            <td>扩展性</td>
+                            <td>难扩展</td>
+                            <td>容易增加消费者</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Chapter 2: Core Concepts -->
+        <section class="chapter" id="ch2">
+            <div class="chapter-header" onclick="toggleChapter(this)">
+                <h2>🏗️ 第二章：RabbitMQ核心概念详解</h2>
+                <div class="chapter-toggle">▼</div>
+            </div>
+            <div class="chapter-content">
+                <h3>🐇 RabbitMQ 是什么？</h3>
+                <p>RabbitMQ 是一个实现了 AMQP（高级消息队列协议）的消息中间件。简单理解：它是帮你管理"消息队列"的软件。</p>
+                <p><strong>同类产品还有：</strong>Kafka、Redis 队列、ActiveMQ 等</p>
+
+                <h3>📐 核心架构图</h3>
+                <div class="arch-diagram">
+                    <div class="row">
+                        <div class="box producer">📤<br>生产者<br>Producer</div>
+                        <span class="arrow">→</span>
+                        <div class="box exchange">🔀<br>交换机<br>Exchange</div>
+                        <span class="arrow">→</span>
+                        <div class="box queue">📭<br>队列<br>Queue</div>
+                        <span class="arrow">→</span>
+                        <div class="box consumer">📥<br>消费者<br>Consumer</div>
+                    </div>
+                </div>
+
+                <div class="analogy-box">
+                    <h4>🍽️ 用餐厅来理解</h4>
+                    <ul>
+                        <li><strong>生产者(Producer)</strong> = 顾客（点餐的人）</li>
+                        <li><strong>交换机(Exchange)</strong> = 前台收银员（决定订单去哪）</li>
+                        <li><strong>队列(Queue)</strong> = 厨房的排队单子（按顺序等待处理）</li>
+                        <li><strong>消费者(Consumer)</strong> = 厨师（处理订单的人）</li>
+                    </ul>
+                </div>
+
+                <h3>📦 详细解释每个概念</h3>
+
+                <div class="concept-box">
+                    <h4>1. 生产者 (Producer)</h4>
+                    <p>生产者是<strong>发送消息的程序/代码</strong>。</p>
+                    <p>工作流程：创建消息 → 把消息发送到 RabbitMQ → 发送完成后继续做其他事（异步）</p>
+                </div>
+
+                <div class="concept-box">
+                    <h4>2. 消费者 (Consumer)</h4>
+                    <p>消费者是<strong>接收和处理消息的程序/代码</strong>。</p>
+                    <p>工作流程：从队列取消息 → 处理消息 → 告诉 RabbitMQ "处理完了"（确认）</p>
+                </div>
+
+                <div class="concept-box">
+                    <h4>3. 队列 (Queue)</h4>
+                    <p>队列是<strong>存储消息的容器</strong>。</p>
+                    <ul>
+                        <li>先进先出（FIFO）：先来的消息先被处理</li>
+                        <li>可以存储任意类型的消息</li>
+                        <li>可以设置消息过期时间</li>
+                        <li>可以设置队列长度限制</li>
+                    </ul>
+                </div>
+
+                <div class="concept-box">
+                    <h4>4. 交换机 (Exchange)</h4>
+                    <p>交换机是<strong>消息的分配中心</strong>，决定消息应该去哪个队列。</p>
+                    <p>工作流程：接收消息 → 根据规则决定 → 发到哪个队列</p>
+                </div>
+
+                <div class="concept-box">
+                    <h4>5. 绑定 (Binding)</h4>
+                    <p>绑定是<strong>连接交换机和队列的规则</strong>。</p>
+                    <p>例如：绑定规则说"所有日志消息去 error_queue"</p>
+                </div>
+
+                <div class="concept-box">
+                    <h4>6. 路由键 (Routing Key)</h4>
+                    <p>路由键是<strong>消息的一个标签</strong>，用于交换机决定消息去哪。</p>
+                    <p>类似于：快递单上的"收件地址"</p>
+                </div>
+
+                <h3>🔄 消息的完整流向</h3>
+                <div class="flow-diagram">
+                    <div class="step">1. 生产者发送</div>
+                    <span class="arrow">→</span>
+                    <div class="step">2. 交换机分配</div>
+                    <span class="arrow">→</span>
+                    <div class="step">3. 进入队列</div>
+                    <span class="arrow">→</span>
+                    <div class="step">4. 消费者取</div>
+                    <span class="arrow">→</span>
+                    <div class="step">5. 确认完成</div>
+                </div>
+
+                <h3>🎯 四种交换机类型</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>类型</th>
+                            <th>说明</th>
+                            <th>比喻</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>direct</strong></td>
+                            <td>精确匹配路由键</td>
+                            <td>快递按精确地址配送</td>
+                        </tr>
+                        <tr>
+                            <td><strong>fanout</strong></td>
+                            <td>广播到所有队列</td>
+                            <td>广播通知，所有人同时收到</td>
+                        </tr>
+                        <tr>
+                            <td><strong>topic</strong></td>
+                            <td>按模式匹配路由键</td>
+                            <td>物流分拣，支持通配符</td>
+                        </tr>
+                        <tr>
+                            <td><strong>headers</strong></td>
+                            <td>按消息头属性匹配</td>
+                            <td>按包裹标签分类</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Chapter 3: Installation -->
+        <section class="chapter" id="ch3">
+            <div class="chapter-header" onclick="toggleChapter(this)">
+                <h2>⚙️ 第三章：快速上手：安装和连接</h2>
+                <div class="chapter-toggle">▼</div>
+            </div>
+            <div class="chapter-content">
+                <h3>🐳 第一步：启动 RabbitMQ</h3>
+                <p>有三种方式，推荐使用 Docker：</p>
+
+                <h4>方式1：Docker（推荐）</h4>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>终端命令</span>
+                </div>
+                <pre><code class="language-bash">docker run -d \
+  --name rabbitmq \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  rabbitmq:management</code></pre>
+
+                <div class="analogy-box">
+                    <h4>📍 启动后访问地址</h4>
+                    <ul>
+                        <li>连接地址：<code>localhost:5672</code></li>
+                        <li>管理界面：<code>http://localhost:15672</code></li>
+                        <li>用户名/密码：<code>guest/guest</code></li>
+                    </ul>
+                </div>
+
+                <h4>方式2：直接安装</h4>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>macOS</span>
+                </div>
+                <pre><code class="language-bash">brew install rabbitmq
+brew services start rabbitmq</code></pre>
+
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>Ubuntu/Debian</span>
+                </div>
+                <pre><code class="language-bash">sudo apt-get install rabbitmq-server
+sudo systemctl start rabbitmq</code></pre>
+
+                <h3>📦 第二步：安装 Python 库</h3>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>安装 pika 库</span>
+                </div>
+                <pre><code class="language-bash">pip install pika</code></pre>
+                <p><em>pika 是 Python 中最常用的 RabbitMQ 客户端库</em></p>
+
+                <h3>🔗 第三步：连接到 RabbitMQ</h3>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>connect.py</span>
+                </div>
+                <pre><code class="language-python">import pika
+
+# 创建连接（连接到本地RabbitMQ）
+connection = pika.BlockingConnection(
+    pika.ConnectionParameters('localhost')
+)
+
+# 创建一个通道（Channel）
+channel = connection.channel()
+
+print("✅ 成功连接到 RabbitMQ！")
+
+# 关闭连接
+connection.close()</code></pre>
+
+                <h3>🔧 连接参数详解</h3>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>完整参数配置</span>
+                </div>
+                <pre><code class="language-python">connection = pika.BlockingConnection(
+    pika.ConnectionParameters(
+        host='localhost',      # RabbitMQ 服务器地址
+        port=5672,            # 端口号（默认5672）
+        virtual_host='/',     # 虚拟主机（类似数据库的database）
+        credentials=pika.PlainCredentials(
+            username='guest',    # 用户名
+            password='guest'      # 密码
+        )
+    )
+)</code></pre>
+
+                <h3>💡 连接失败？检查清单</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>问题</th>
+                            <th>解决方法</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>连接被拒绝</td>
+                            <td>确认 RabbitMQ 已启动：<code>docker ps</code></td>
+                        </tr>
+                        <tr>
+                            <td>连接超时</td>
+                            <td>检查端口：<code>netstat -an | grep 5672</code></td>
+                        </tr>
+                        <tr>
+                            <td>认证失败</td>
+                            <td>检查用户名密码是否正确</td>
+                        </tr>
+                        <tr>
+                            <td>防火墙阻止</td>
+                            <td>开放 5672 和 15672 端口</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Chapter 4: Producer and Consumer -->
+        <section class="chapter" id="ch4">
+            <div class="chapter-header" onclick="toggleChapter(this)">
+                <h2>📤 第四章：生产者与消费者：最简单的方式</h2>
+                <div class="chapter-toggle">▼</div>
+            </div>
+            <div class="chapter-content">
+                <h3>🎯 这一章学什么</h3>
+                <p>实现最简单的一对一式消息传递：</p>
+                <div class="flow-diagram">
+                    <div class="step">生产者</div>
+                    <span class="arrow">────────</span>
+                    <div class="step">队列</div>
+                    <span class="arrow">────────</span>
+                    <div class="step">消费者</div>
+                </div>
+
+                <h3>📤 生产者：发送消息</h3>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>producer.py</span>
+                </div>
+                <pre><code class="language-python">import pika
+
+# 1. 建立连接
+connection = pika.BlockingConnection(
+    pika.ConnectionParameters('localhost')
+)
+channel = connection.channel()
+
+# 2. 声明队列（如果不存在则创建）
+# durable=True 表示队列持久化，重启后不会丢失
+channel.queue_declare(queue='hello', durable=True)
+
+# 3. 发送消息
+message = 'Hello World!'
+channel.basic_publish(
+    exchange='',              # 空字符串表示使用默认交换机
+    routing_key='hello',      # 路由键 = 队列名
+    body=message.encode()     # 消息内容（需要编码为bytes）
+)
+
+print(f"📤 已发送消息: {message}")
+
+# 4. 关闭连接
+connection.close()</code></pre>
+
+                <h3>📥 消费者：接收消息</h3>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>consumer.py</span>
+                </div>
+                <pre><code class="language-python">import pika
+
+# 1. 建立连接
+connection = pika.BlockingConnection(
+    pika.ConnectionParameters('localhost')
+)
+channel = connection.channel()
+
+# 2. 声明队列（确保队列存在）
+channel.queue_declare(queue='hello', durable=True)
+
+# 3. 定义处理函数
+def callback(ch, method, properties, body):
+    """当收到消息时，这个函数会被调用"""
+    message = body.decode()  # 解码消息
+    print(f"📥 收到消息: {message}")
+
+    # 手动确认消息已处理
+    ch.basic_ack(delivery_tag=method.delivery_tag)
+
+# 4. 开始监听队列
+channel.basic_consume(
+    queue='hello',
+    on_message_callback=callback
+)
+
+print("📡 正在等待消息... 按 Ctrl+C 退出")
+
+# 5. 开始消费（进入循环）
+channel.start_consuming()</code></pre>
+
+                <h3>🔄 完整的发送-接收流程</h3>
+                <div class="interactive-demo">
+                    <h4>🧪 模拟演示</h4>
+                    <p>打开两个终端：</p>
+                    <p>终端1：<code>python consumer.py</code></p>
+                    <p>终端2：<code>python producer.py</code></p>
+                    <div class="demo-controls">
+                        <button class="demo-btn" onclick="simulateSend()">📤 模拟发送消息</button>
+                        <button class="demo-btn" onclick="simulateReceive()">📥 模拟接收消息</button>
+                        <button class="demo-btn" onclick="clearDemo()">🗑️ 清空</button>
+                    </div>
+                    <div class="demo-output" id="demoOutput">
+                        <div class="log-entry system">💡 运行上面的代码来测试...</div>
+                    </div>
+                </div>
+
+                <h3>📋 消息确认机制</h3>
+                <p>为什么要"确认"？</p>
+                <div class="analogy-box">
+                    <h4>场景</h4>
+                    <p>消费者收到消息，处理到一半崩溃了</p>
+                    <ul>
+                        <li><strong>如果没有确认：</strong>消息丢失了</li>
+                        <li><strong>如果有确认：</strong>RabbitMQ知道消息没处理完，会重新投递</li>
+                    </ul>
+                </div>
+
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>确认机制示例</span>
+                </div>
+                <pre><code class="language-python">def callback(ch, method, properties, body):
+    try:
+        # 处理消息
+        process_message(body)
+        # 成功：确认消息
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+    except Exception as e:
+        # 失败：拒绝消息，可以选择重新入队
+        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)</code></pre>
+            </div>
+        </section>
+
+        <!-- Chapter 5: Work Queue -->
+        <section class="chapter" id="ch5">
+            <div class="chapter-header" onclick="toggleChapter(this)">
+                <h2>👷 第五章：工作队列：多个工人分担任务</h2>
+                <div class="chapter-toggle">▼</div>
+            </div>
+            <div class="chapter-content">
+                <h3>🎯 这一章学什么</h3>
+                <p>场景：有很多任务需要处理，一个工人太慢，需要多个工人同时工作。</p>
+
+                <div class="arch-diagram">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <strong>派单人</strong> ──→ <strong>任务池</strong> ──→ <strong>工人们（轮流接收任务）</strong>
+                    </div>
+                    <div class="row">
+                        <div class="box consumer">👷 工人1<br>→任务1 →任务4</div>
+                        <div class="box consumer">👷 工人2<br>→任务2 →任务5</div>
+                        <div class="box consumer">👷 工人3<br>→任务3 →任务6</div>
+                    </div>
+                </div>
+
+                <h3>🔧 发送任务消息</h3>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>send_tasks.py</span>
+                </div>
+                <pre><code class="language-python">import pika
+import json
+
+connection = pika.BlockingConnection(
+    pika.ConnectionParameters('localhost')
+)
+channel = connection.channel()
+
+# 声明任务队列
+channel.queue_declare(queue='task_queue', durable=True)
+
+# 模拟发送多个任务
+tasks = [
+    {"task_id": 1, "type": "发送邮件", "data": "user@example.com"},
+    {"task_id": 2, "type": "生成报表", "data": "2024-01"},
+    {"task_id": 3, "type": "压缩图片", "data": "photo.jpg"},
+]
+
+for task in tasks:
+    message = json.dumps(task)
+    channel.basic_publish(
+        exchange='',
+        routing_key='task_queue',
+        body=message.encode(),
+        properties=pika.BasicProperties(delivery_mode=2)  # 持久化
+    )
+    print(f"📤 已发送任务: {task['task_id']} - {task['type']}")
+
+connection.close()</code></pre>
+
+                <h3>👷 启动多个工人</h3>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>worker.py</span>
+                </div>
+                <pre><code class="language-python">import pika
+import json
+import time
+import random
+
+def worker(worker_name):
+    """工人程序"""
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters('localhost')
+    )
+    channel = connection.channel()
+
+    # 声明队列
+    channel.queue_declare(queue='task_queue', durable=True)
+
+    # 关键设置：同一时间只处理一个任务（公平分配）
+    channel.basic_qos(prefetch_count=1)
+
+    def callback(ch, method, properties, body):
+        task = json.loads(body.decode())
+        print(f"👷 {worker_name} 收到任务: {task['task_id']} - {task['type']}")
+
+        # 模拟处理时间
+        processing_time = random.randint(1, 3)
+        time.sleep(processing_time)
+
+        print(f"✅ {worker_name} 完成任务 {task['task_id']}，耗时 {processing_time}秒")
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    channel.basic_consume(
+        queue='task_queue',
+        on_message_callback=callback
+    )
+
+    print(f"👷 {worker_name} 已就绪，等待任务...")
+    channel.start_consuming()
+
+# 启动一个工人
+if __name__ == '__main__':
+    worker("工人A")</code></pre>
+
+                <h3>🧪 测试</h3>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>终端命令</span>
+                </div>
+                <pre><code class="language-bash"># 终端1-3：启动3个工人
+python worker.py  # 工人A
+python worker.py  # 工人B
+python worker.py  # 工人C
+
+# 终端4：发送任务
+python send_tasks.py</code></pre>
+
+                <h3>📊 工作队列的特点</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>特点</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>轮询分发</strong></td>
+                            <td>每个消息只分给一个消费者</td>
+                        </tr>
+                        <tr>
+                            <td><strong>公平分发</strong></td>
+                            <td>谁空闲谁拿任务</td>
+                        </tr>
+                        <tr>
+                            <td><strong>持久化</strong></td>
+                            <td>任务不会因工人崩溃而丢失</td>
+                        </tr>
+                        <tr>
+                            <td><strong>背压控制</strong></td>
+                            <td>防止工人过载（prefetch_count）</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>💡 为什么要设置 prefetch_count=1？</h3>
+                <div class="analogy-box">
+                    <h4>没有限制的情况</h4>
+                    <p>假设有3个任务，2个工人。工人A很快处理完，工人B还在忙，但RabbitMQ可能把3个任务都给了工人A。</p>
+                </div>
+                <div class="concept-box">
+                    <h4>有 prefetch_count=1 的情况</h4>
+                    <p>工人A处理完任务1后，才能拿到任务2。工人B处理完任务2后，才能拿到任务3。<strong>实现真正的负载均衡！</strong></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chapter 6: Exchange -->
+        <section class="chapter" id="ch6">
+            <div class="chapter-header" onclick="toggleChapter(this)">
+                <h2>🔀 第六章：交换机：消息的智能路由</h2>
+                <div class="chapter-toggle">▼</div>
+            </div>
+            <div class="chapter-content">
+                <h3>🎯 这一章学什么</h3>
+                <p>之前的例子都用的是"默认交换机"。现在学习如何使用<strong>有名字的交换机</strong>，实现更智能的消息路由。</p>
+
+                <h3>🏭 四种交换机类型</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>类型</th>
+                            <th>路由规则</th>
+                            <th>典型场景</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>fanout</strong></td>
+                            <td>发送到所有绑定的队列</td>
+                            <td>系统通知、广播</td>
+                        </tr>
+                        <tr>
+                            <td><strong>direct</strong></td>
+                            <td>精确匹配路由键</td>
+                            <td>日志分级、分类处理</td>
+                        </tr>
+                        <tr>
+                            <td><strong>topic</strong></td>
+                            <td>模式匹配路由键</td>
+                            <td>复杂路由规则</td>
+                        </tr>
+                        <tr>
+                            <td><strong>headers</strong></td>
+                            <td>匹配消息头属性</td>
+                            <td>特殊路由需求</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>1️⃣ fanout 交换机（广播）</h3>
+                <p>所有订阅者都能收到消息，类似于"广播"。</p>
+
+                <div class="arch-diagram">
+                    <div class="row">
+                        <div class="box exchange">📢 交换机<br>(fanout)</div>
+                    </div>
+                    <div style="text-align: center; margin: 10px 0;">↓ ↓ ↓</div>
+                    <div class="row">
+                        <div class="box queue">📧 邮件通知</div>
+                        <div class="box queue">📱 短信通知</div>
+                        <div class="box queue">💬 站内通知</div>
+                    </div>
+                </div>
+
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>fanout_publisher.py</span>
+                </div>
+                <pre><code class="language-python">import pika
+
+connection = pika.BlockingConnection(
+    pika.ConnectionParameters('localhost')
+)
+channel = connection.channel()
+
+# 声明fanout交换机
+channel.exchange_declare(
+    exchange='notifications',
+    exchange_type='fanout'
+)
+
+# 发送通知（不需要指定路由键，fanout会忽略）
+message = "系统将于今晚8点进行维护"
+channel.basic_publish(
+    exchange='notifications',
+    routing_key='',
+    body=message.encode()
+)
+
+print(f"📢 广播发送: {message}")
+connection.close()</code></pre>
+
+                <h3>2️⃣ direct 交换机（精确匹配）</h3>
+                <p>根据日志级别发送到不同的队列。</p>
+
+                <div class="arch-diagram">
+                    <div class="row">
+                        <div class="box exchange">📝 交换机<br>(direct)</div>
+                    </div>
+                    <div style="text-align: center; margin: 10px 0;">↓ info &nbsp; ↓ warning &nbsp; ↓ error</div>
+                    <div class="row">
+                        <div class="box queue">ℹ️ info_queue</div>
+                        <div class="box queue">⚠️ warning_queue</div>
+                        <div class="box queue">🚨 error_queue</div>
+                    </div>
+                </div>
+
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>direct_publisher.py</span>
+                </div>
+                <pre><code class="language-python">import pika
+
+connection = pika.BlockingConnection(
+    pika.ConnectionParameters('localhost')
+)
+channel = connection.channel()
+
+# 声明direct交换机
+channel.exchange_declare(exchange='logs', exchange_type='direct')
+
+# 声明多个队列并绑定
+queues = {
+    'info_queue': 'info',
+    'warning_queue': 'warning',
+    'error_queue': 'error',
+}
+
+for queue, routing_key in queues.items():
+    channel.queue_declare(queue=queue, durable=True)
+    channel.queue_bind(
+        exchange='logs',
+        queue=queue,
+        routing_key=routing_key
+    )
+
+# 发送不同级别的日志
+logs = [
+    ('info', '用户张三登录了系统'),
+    ('warning', '磁盘空间不足80%'),
+    ('error', '数据库连接失败'),
+]
+
+for level, message in logs:
+    channel.basic_publish(
+        exchange='logs',
+        routing_key=level,    # 关键：路由键决定去哪个队列
+        body=message.encode()
+    )
+    print(f"📝 [{level.upper()}] {message}")
+
+connection.close()</code></pre>
+            </div>
+        </section>
+
+        <!-- Chapter 7: Topic Exchange -->
+        <section class="chapter" id="ch7">
+            <div class="chapter-header" onclick="toggleChapter(this)">
+                <h2>🎭 第七章：主题交换机：用通配符匹配消息</h2>
+                <div class="chapter-toggle">▼</div>
+            </div>
+            <div class="chapter-content">
+                <h3>🎯 这一章学什么</h3>
+                <p>topic 交换机是最灵活的交换机，支持<strong>通配符匹配</strong>。</p>
+
+                <h3>🎭 通配符规则</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>符号</th>
+                            <th>含义</th>
+                            <th>示例</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>*</code></td>
+                            <td>精确匹配<strong>一个</strong>单词</td>
+                            <td><code>*.orange.*</code> 匹配 <code>quick.orange.rabbit</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>#</code></td>
+                            <td>匹配<strong>零个或多个</strong>单词</td>
+                            <td><code>lazy.#</code> 匹配 <code>lazy</code>、<code>lazy.orange</code>...</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="analogy-box">
+                    <h4>📝 单词定义</h4>
+                    <p>由点(<code>.</code>)分隔的字符串</p>
+                    <p><code>quick.orange.rabbit</code> → 3个单词<br>
+                    <code>lazy</code> → 1个单词<br>
+                    <code>quick.orange.new.rabbit</code> → 4个单词</p>
+                </div>
+
+                <h3>🏢 场景：物流系统</h3>
+                <p>路由键格式：<code>&lt;城市&gt;.&lt;仓库&gt;.&lt;商品类型&gt;</code></p>
+
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>topic_publisher.py</span>
+                </div>
+                <pre><code class="language-python">import pika
+
+connection = pika.BlockingConnection(
+    pika.ConnectionParameters('localhost')
+)
+channel = connection.channel()
+
+# 声明topic交换机
+channel.exchange_declare(exchange='logistics', exchange_type='topic')
+
+# 模拟发送物流消息
+messages = [
+    ('beijing.warehouse1.electronics', '北京仓1: 电视机 10台'),
+    ('shanghai.warehouse2.clothing', '上海仓2: 衣服 100件'),
+    ('beijing.warehouse1.clothing', '北京仓1: 衣服 50件'),
+    ('shenzhen.warehouse1.electronics', '深圳仓1: 手机 200台'),
+]
+
+for routing_key, message in messages:
+    channel.basic_publish(
+        exchange='logistics',
+        routing_key=routing_key,
+        body=message.encode()
+    )
+    print(f"📦 [{routing_key}] {message}")
+
+connection.close()</code></pre>
+
+                <h3>📥 接收者代码</h3>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>topic_consumer.py</span>
+                </div>
+                <pre><code class="language-python">import pika
+
+def logistics_consumer(queue_name, binding_key):
+    """物流消费者"""
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters('localhost')
+    )
+    channel = connection.channel()
+
+    channel.exchange_declare(exchange='logistics', exchange_type='topic')
+    channel.queue_declare(queue=queue_name, durable=True)
+    channel.queue_bind(
+        exchange='logistics',
+        queue=queue_name,
+        routing_key=binding_key
+    )
+
+    def callback(ch, method, properties, body):
+        print(f"📥 {queue_name} 收到: {body.decode()}")
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    channel.basic_consume(
+        queue=queue_name,
+        on_message_callback=callback
+    )
+
+    print(f"👂 {queue_name} 监听: {binding_key}")
+    channel.start_consuming()
+
+# 示例绑定规则
+if __name__ == '__main__':
+    # 监听所有电子产品: *.electronics.*
+    logistics_consumer('electronics_queue', '*.electronics.*')
+
+    # 监听北京的所有物流: beijing.#
+    # logistics_consumer('beijing_queue', 'beijing.#')
+
+    # 监听1号仓库: *.warehouse1.*
+    # logistics_consumer('warehouse1_queue', '*.warehouse1.*')
+
+    # 监听所有: #
+    # logistics_consumer('all_queue', '#')</code></pre>
+            </div>
+        </section>
+
+        <!-- Chapter 8: Practice Project -->
+        <section class="chapter" id="ch8">
+            <div class="chapter-header" onclick="toggleChapter(this)">
+                <h2>🚀 第八章：实战项目：构建订单处理系统</h2>
+                <div class="chapter-toggle">▼</div>
+            </div>
+            <div class="chapter-content">
+                <h3>🎯 项目需求</h3>
+                <p>构建一个订单处理系统，包含以下功能：</p>
+                <div class="flow-diagram">
+                    <div class="step">下单</div>
+                    <span class="arrow">→</span>
+                    <div class="step">库存检查</div>
+                    <span class="arrow">→</span>
+                    <div class="step">支付处理</div>
+                    <span class="arrow">→</span>
+                    <div class="step">发货通知</div>
+                    <span class="arrow">→</span>
+                    <div class="step">数据分析</div>
+                </div>
+
+                <h3>📊 系统架构</h3>
+                <div class="arch-diagram">
+                    <div style="text-align: center;">
+                        <strong>📤 订单交换机 (topic)</strong>
+                    </div>
+                    <div style="text-align: center; margin: 10px 0;">↓ order.* / payment.* / #</div>
+                    <div class="row">
+                        <div class="box queue">📦 库存服务</div>
+                        <div class="box queue">💰 支付服务</div>
+                        <div class="box queue">📢 通知服务</div>
+                        <div class="box queue">📊 分析服务</div>
+                    </div>
+                </div>
+
+                <h3>📤 订单服务（生产者）</h3>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>order_publisher.py</span>
+                </div>
+                <pre><code class="language-python">import pika
+import json
+import time
+
+class OrderPublisher:
+    def __init__(self):
+        self.connection = pika.BlockingConnection(
+            pika.ConnectionParameters('localhost')
+        )
+        self.channel = self.connection.channel()
+
+        # 声明交换机
+        self.channel.exchange_declare(
+            exchange='orders',
+            exchange_type='topic'
+        )
+
+        # 声明所有需要的队列并绑定
+        bindings = [
+            ('inventory_queue', 'order.created'),
+            ('payment_queue', 'payment.process'),
+            ('notification_queue', 'order.*'),
+            ('analytics_queue', '#')
+        ]
+
+        for queue, routing_key in bindings:
+            self.channel.queue_declare(queue=queue, durable=True)
+            self.channel.queue_bind(
+                exchange='orders',
+                queue=queue,
+                routing_key=routing_key
+            )
+
+    def create_order(self, order_id, user_id, items, total_amount):
+        """创建订单"""
+        order = {
+            'order_id': order_id,
+            'user_id': user_id,
+            'items': items,
+            'total_amount': total_amount,
+            'status': 'created',
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+        # 发布订单创建事件
+        self.publish('order.created', order)
+
+        # 发布支付请求
+        payment_request = {
+            'order_id': order_id,
+            'amount': total_amount
+        }
+        self.publish('payment.process', payment_request)
+
+        return order
+
+    def publish(self, routing_key, message):
+        self.channel.basic_publish(
+            exchange='orders',
+            routing_key=routing_key,
+            body=json.dumps(message).encode(),
+            properties=pika.BasicProperties(delivery_mode=2)
+        )
+        print(f"📤 发送: [{routing_key}] {message}")
+
+    def close(self):
+        self.connection.close()
+
+# 测试
+if __name__ == '__main__':
+    publisher = OrderPublisher()
+    order = publisher.create_order(
+        order_id='ORD20240101001',
+        user_id='USER001',
+        items=[{'name': 'iPhone 15', 'quantity': 1, 'price': 7999}],
+        total_amount=7999
+    )
+    publisher.close()</code></pre>
+
+                <h3>👷 消费者服务</h3>
+
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>inventory_service.py</span>
+                </div>
+                <pre><code class="language-python">import pika
+import json
+
+def inventory_service():
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters('localhost')
+    )
+    channel = connection.channel()
+
+    channel.queue_declare(queue='inventory_queue', durable=True)
+    channel.queue_bind(
+        exchange='orders',
+        queue='inventory_queue',
+        routing_key='order.created'
+    )
+
+    def callback(ch, method, properties, body):
+        order = json.loads(body.decode())
+        print(f"📦 库存服务收到订单: {order['order_id']}")
+
+        for item in order['items']:
+            print(f"   检查 {item['name']} 库存: 充足")
+
+        print(f"✅ 订单 {order['order_id']} 库存检查通过")
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    channel.basic_consume(
+        queue='inventory_queue',
+        on_message_callback=callback
+    )
+
+    print("📦 库存服务已启动，等待订单...")
+    channel.start_consuming()
+
+inventory_service()</code></pre>
+
+                <h3>🧪 测试完整流程</h3>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>运行顺序</span>
+                </div>
+                <pre><code class="language-bash"># 终端1-4：启动4个服务
+python inventory_service.py
+python payment_service.py
+python notification_service.py
+python analytics_service.py
+
+# 终端5：创建订单
+python order_publisher.py</code></pre>
+            </div>
+        </section>
+
+        <!-- Chapter 9: Best Practices -->
+        <section class="chapter" id="ch9">
+            <div class="chapter-header" onclick="toggleChapter(this)">
+                <h2>✅ 第九章：最佳实践与常见问题</h2>
+                <div class="chapter-toggle">▼</div>
+            </div>
+            <div class="chapter-content">
+                <h3>✅ 最佳实践</h3>
+
+                <h4>1. 连接管理</h4>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>推荐方式</span>
+                </div>
+                <pre><code class="language-python"># ❌ 不推荐：每次发送都创建连接
+def send_message(message):
+    connection = pika.BlockingConnection(...)
+    channel = connection.channel()
+    channel.basic_publish(...)
+    connection.close()
+
+# ✅ 推荐：复用连接
+connection = pika.BlockingConnection(...)
+channel = connection.channel()
+
+def send_message(message):
+    channel.basic_publish(...)  # 使用已建立的连接</code></pre>
+
+                <h4>2. 消息持久化</h4>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>持久化配置</span>
+                </div>
+                <pre><code class="language-python"># 队列持久化
+channel.queue_declare(queue='my_queue', durable=True)
+
+# 消息持久化
+channel.basic_publish(
+    ...,
+    properties=pika.BasicProperties(
+        delivery_mode=2  # 持久化
+    )
+)</code></pre>
+
+                <h4>3. 消费者确认</h4>
+                <div class="code-title">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span>手动确认</span>
+                </div>
+                <pre><code class="language-python"># ❌ 自动确认（可能丢失消息）
+channel.basic_consume(queue='my_queue', auto_ack=True)
+
+# ✅ 手动确认（确保消息处理完成）
+channel.basic_consume(queue='my_queue', auto_ack=False)
+
+def callback(ch, method, properties, body):
+    try:
+        process(body)
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+    except Exception:
+        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)</code></pre>
+
+                <h4>4. 公平分发</h4>
+                <pre><code class="language-python"># 同一时间只处理1条消息
+channel.basic_qos(prefetch_count=1)</code></pre>
+
+                <h3>❓ 常见问题</h3>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        Q1: 消息丢失怎么办？
+                        <span>+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p><strong>原因：</strong>队列或消息没有持久化</p>
+                        <p><strong>解决：</strong></p>
+                        <ul>
+                            <li>队列持久化：<code>channel.queue_declare(queue='my_queue', durable=True)</code></li>
+                            <li>消息持久化：<code>properties=pika.BasicProperties(delivery_mode=2)</code></li>
+                            <li>手动确认：<code>auto_ack=False</code></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        Q2: 消费者处理失败怎么办？
+                        <span>+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>使用重试机制：</p>
+                        <pre><code class="language-python">def callback(ch, method, properties, body):
+    try:
+        process(body)
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+    except Exception as e:
+        # 失败后重新入队
+        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)</code></pre>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        Q3: 如何监控队列？
+                        <span>+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>使用管理界面：<code>http://localhost:15672</code></p>
+                        <p>用户名/密码：<code>guest/guest</code></p>
+                        <p>可以查看：</p>
+                        <ul>
+                            <li>队列状态（消息数、消费者数）</li>
+                            <li>交换机绑定</li>
+                            <li>连接状态</li>
+                            <li>消息吞吐量</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>📚 学习路径</h3>
+                <div class="flow-diagram">
+                    <div class="step">基础</div>
+                    <span class="arrow">→</span>
+                    <div class="step">进阶</div>
+                    <span class="arrow">→</span>
+                    <div class="step">高级</div>
+                </div>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>阶段</th>
+                            <th>内容</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>基础</td>
+                            <td>连接、基本消息发送/接收</td>
+                        </tr>
+                        <tr>
+                            <td>进阶</td>
+                            <td>工作队列、交换机、路由</td>
+                        </tr>
+                        <tr>
+                            <td>高级</td>
+                            <td>事务、集群、监控、性能优化</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>🎉 总结</h3>
+                <div class="summary-box">
+                    <h4>📋 你学会了：</h4>
+                    <ul class="summary-list">
+                        <li>什么是消息队列，为什么需要它</li>
+                        <li>RabbitMQ 核心概念（生产者、消费者、队列、交换机）</li>
+                        <li>连接管理和消息发送/接收</li>
+                        <li>工作队列实现负载均衡</li>
+                        <li>四种交换机类型及使用场景</li>
+                        <li>主题交换机和通配符匹配</li>
+                        <li>构建完整的订单处理系统</li>
+                        <li>最佳实践和常见问题解决</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer style="text-align: center; padding: 40px; color: white;">
+            <p>📚 本教程由 MiniMax Agent 编写</p>
+            <p style="margin-top: 10px; opacity: 0.7;">祝你学习愉快！🐇</p>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+    <script>
+        // Toggle chapter
+        function toggleChapter(header) {
+            const chapter = header.parentElement;
+            chapter.classList.toggle('active');
+        }
+
+        // Toggle FAQ
+        function toggleFaq(question) {
+            const faqItem = question.parentElement;
+            faqItem.classList.toggle('active');
+            const span = question.querySelector('span');
+            span.textContent = faqItem.classList.contains('active') ? '−' : '+';
+        }
+
+        // Progress bar
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+
+            // Show/hide scroll to top button
+            const scrollTop = document.getElementById('scrollTop');
+            if (winScroll > 500) {
+                scrollTop.classList.add('visible');
+            } else {
+                scrollTop.classList.remove('visible');
+            }
+        });
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Interactive demo simulation
+        let messageQueue = [];
+
+        function simulateSend() {
+            const messages = [
+                'Hello World!',
+                '这是一条测试消息',
+                'RabbitMQ 消息队列',
+                'Python + RabbitMQ'
+            ];
+            const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+
+            messageQueue.push(randomMsg);
+
+            const output = document.getElementById('demoOutput');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry producer';
+            entry.textContent = `📤 [生产者] 发送: "${randomMsg}" (队列中: ${messageQueue.length} 条)`;
+            output.appendChild(entry);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function simulateReceive() {
+            if (messageQueue.length === 0) {
+                const output = document.getElementById('demoOutput');
+                const entry = document.createElement('div');
+                entry.className = 'log-entry system';
+                entry.textContent = '⚠️ 队列为空，没有消息可以接收';
+                output.appendChild(entry);
+                return;
+            }
+
+            const message = messageQueue.shift();
+            const output = document.getElementById('demoOutput');
+
+            const entry = document.createElement('div');
+            entry.className = 'log-entry consumer';
+            entry.textContent = `📥 [消费者] 接收: "${message}" (队列中: ${messageQueue.length} 条)`;
+            output.appendChild(entry);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearDemo() {
+            messageQueue = [];
+            const output = document.getElementById('demoOutput');
+            output.innerHTML = '<div class="log-entry system">💡 清空完成，可以继续测试...</div>';
+        }
+
+        // Add copy button to code blocks
+        document.querySelectorAll('pre').forEach(pre => {
+            const btn = document.createElement('button');
+            btn.className = 'copy-btn';
+            btn.textContent = '复制';
+            btn.onclick = () => {
+                const code = pre.querySelector('code').textContent;
+                navigator.clipboard.writeText(code);
+                btn.textContent = '已复制!';
+                setTimeout(() => btn.textContent = '复制', 2000);
+            };
+            pre.style.position = 'relative';
+            pre.appendChild(btn);
+        });
+
+        // Open first chapter by default
+        document.querySelector('.chapter').classList.add('active');
+    </script>
+
+<style>
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.inland-security-footer {
+  position: fixed;
+  z-index: 10;
+  bottom: 0;
+  right: 0;
+  width: fit-content;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tooltip-container {
+  position: relative;
+}
+
+.trigger-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background-color: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.minimax-link {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 300;
+  color: #adadad;
+  text-decoration: none;
+}
+
+.minimax-link:visited {
+  color: #adadad;
+}
+
+.minimax-link:hover {
+  color: #666666;
+}
+
+.tooltip-content {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  padding-bottom: 16px; /* 8px 内容间距 + 8px 用于鼠标移动的透明区域 */
+  font-size: 12px;
+  line-height: 17px;
+  background-color: #fafafa;
+  border-radius: 12px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  color: #171717;
+}
+
+/* 创建透明的连接区域，让鼠标可以平滑移动到 tooltip */
+.tooltip-content::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 16px;
+}
+
+.tooltip-container:hover .tooltip-content {
+  display: flex;
+}
+
+.info-section {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.beian-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #171717;
+}
+
+.beian-icon {
+  width: 14px;
+  height: 14px;
+  margin-right: 2px;
+}
+
+.underline-text {
+  color: #171717;
+  text-decoration: underline;
+}
+
+.underline-text:hover {
+  color: #000000;
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .trigger-content {
+    background-color: transparent;
+  }
+
+  .minimax-link,
+  .minimax-link:visited {
+    color: #666666;
+  }
+
+  .minimax-link:hover {
+    color: #adadad;
+  }
+
+  .tooltip-content {
+    background-color: #262626;
+    color: #ededed;
+  }
+
+  .beian-link,
+  .underline-text {
+    color: #ededed;
+  }
+
+  .underline-text:hover {
+    color: #ffffff;
+  }
+}
+
+</style>
+<div class="inland-security-footer">
+  <div class="tooltip-container">
+    <div class="trigger-content">
+      <a href="https://www.minimaxi.com/" target="_blank" rel="noreferrer" class="minimax-link">
+        <span>© 2026 MiniMax</span>
+      </a>
+    </div>
+    <div class="tooltip-content">
+      <section class="info-section">
+        <span>上海稀宇科技有限公司</span>
+      </section>
+
+      <section class="info-section">
+        <a class="beian-link" href="https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=31010402010179" target="_blank" rel="noreferrer">
+          <img alt="hailuo-beian-icon" src="https://cdn.hailuoai.com/hailuo-video-web/public_assets/223037d3-79fd-4db0-a456-749f38a6a14b.png" class="beian-icon">
+          <span class="underline-text">沪公网安备31010402010179号</span>
+        </a>
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer" class="underline-text">
+          沪ICP备2023003282号-38
+        </a>
+      </section>
+
+      <section class="info-section">
+        <span>模型名称：MiniMax</span>
+        <span>备案号：Shanghai-MiniMax-202505230046</span>
+      </section>
+
+      <section class="info-section">
+        <a href="https://agent.minimaxi.com/doc/zh/terms-of-service.html" target="_blank" rel="noreferrer" class="underline-text">
+          用户协议
+        </a>
+        <a href="https://agent.minimaxi.com/doc/zh/privacy-policy.html" target="_blank" rel="noreferrer" class="underline-text">
+          隐私政策
+        </a>
+      </section>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/**
+ * Iframe 元素高亮注入脚本
+ * 需要在目标网站中引入此脚本来支持跨域 iframe 高亮功能
+ *
+ * 使用方法：
+ * 1. 将此脚本添加到目标网站的 HTML 中
+ * 2. 或通过浏览器扩展、用户脚本等方式注入
+ */
+
+(function () {
+  "use strict";
+
+  // 检查是否在 iframe 中
+  if (window.self === window.top) {
+    return; // 不在 iframe 中，不执行
+  }
+
+  // 检查是否已经初始化过
+  if (window.__iframeHighlightInitialized) {
+    return;
+  }
+  window.__iframeHighlightInitialized = true;
+  console.log("Iframe 高亮脚本已加载");
+
+  // 创建高亮覆盖层
+  var overlay = document.createElement("div");
+  overlay.id = "iframe-highlight-overlay";
+  overlay.style.cssText = "\n    position: fixed;\n    top: 0;\n    left: 0;\n    width: 100vw;\n    height: 100vh;\n    pointer-events: none;\n    z-index: 999999;\n    overflow: hidden;\n  ";
+
+  // 创建悬停高亮框（虚线边框）
+  var highlightBox = document.createElement("div");
+  highlightBox.id = "iframe-highlight-box";
+  highlightBox.style.cssText = "\n    position: absolute;\n    border: 2px dashed #007AFF;\n    background: rgba(0, 122, 255, 0.08);\n    pointer-events: none;\n    display: none;\n    transition: all 0.1s ease;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);\n    border-radius: 2px;\n  ";
+
+  // 创建选中节点的常驻高亮框（实线边框）
+  var selectedBox = document.createElement("div");
+  selectedBox.id = "iframe-selected-box";
+  selectedBox.style.cssText = "\n    position: absolute;\n    border: 2px solid #007AFF;\n    pointer-events: none;\n    display: none;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 0 8px rgba(255, 107, 53, 0.4);\n    border-radius: 2px;\n    z-index: 1000000;\n  ";
+
+  // 创建悬停标签显示
+  var tagLabel = document.createElement("div");
+  tagLabel.id = "iframe-tag-label";
+  tagLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 2px 6px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 2px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000001;\n    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);\n    font-weight: 500;\n  ";
+
+  // 创建选中节点标签
+  var selectedLabel = document.createElement("div");
+  selectedLabel.id = "iframe-selected-label";
+  selectedLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 3px 8px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 3px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000002;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);\n    font-weight: 600;\n  ";
+  overlay.appendChild(highlightBox);
+  overlay.appendChild(selectedBox);
+  overlay.appendChild(tagLabel);
+  overlay.appendChild(selectedLabel);
+  document.body.appendChild(overlay);
+
+  // 存储当前选中的元素
+  var selectedElement = null;
+  var highlightEnabled = false;
+
+  // 更新选中元素的高亮显示
+  function updateSelectedHighlight(element) {
+    console.log("updateSelectedHighlight called with:", element);
+    if (!element) {
+      selectedBox.style.display = "none";
+      selectedLabel.style.display = "none";
+      selectedElement = null;
+      console.log("Cleared selected highlight");
+      return;
+    }
+    selectedElement = element;
+    var rect = element.getBoundingClientRect();
+    console.log("Selected element rect:", rect);
+
+    // 更新选中高亮框位置
+    selectedBox.style.display = "block";
+    selectedBox.style.left = "".concat(rect.left - 2, "px");
+    selectedBox.style.top = "".concat(rect.top - 2, "px");
+    selectedBox.style.width = "".concat(rect.width + 4, "px");
+    selectedBox.style.height = "".concat(rect.height + 4, "px");
+
+    // 更新选中标签位置和内容
+    selectedLabel.style.display = "block";
+    selectedLabel.textContent = "\u2713 <".concat(element.tagName.toLowerCase(), ">");
+
+    // 计算标签位置，确保不超出视窗
+    var labelTop = rect.top - 28;
+    var labelLeft = rect.left;
+
+    // 如果标签会超出顶部，显示在元素下方
+    if (labelTop < 5) {
+      labelTop = rect.bottom + 5;
+    }
+
+    // 如果标签会超出右侧，向左调整
+    var labelWidth = selectedLabel.offsetWidth || 100; // 预估宽度
+    if (labelLeft + labelWidth > window.innerWidth - 10) {
+      labelLeft = window.innerWidth - labelWidth - 10;
+    }
+    selectedLabel.style.left = "".concat(Math.max(5, labelLeft), "px");
+    selectedLabel.style.top = "".concat(labelTop, "px");
+    console.log("Selected highlight positioned at:", {
+      left: selectedBox.style.left,
+      top: selectedBox.style.top,
+      width: selectedBox.style.width,
+      height: selectedBox.style.height
+    });
+  }
+  function getElementSelector(element) {
+    if (!(element instanceof Element)) throw new Error('Argument must be a DOM element');
+    var segments = [];
+    var current = element;
+    while (current !== document.documentElement) {
+      var selector = '';
+      // 优先检查唯一ID
+      if (current.id && document.querySelectorAll("#".concat(current.id)).length === 1) {
+        segments.unshift("#".concat(current.id));
+        break; // ID唯一，无需继续向上
+      }
+
+      // 生成类名选择器（取第一个有效类名）
+      var classes = Array.from(current.classList).filter(function (c) {
+        return !c.startsWith('js-');
+      });
+      var className = classes.length > 0 ? ".".concat(classes[0]) : '';
+
+      // 生成位置索引（nth-child）
+      var tag = current.tagName.toLowerCase();
+      if (!className) {
+        var siblings = Array.from(current.parentNode.children);
+        var index = siblings.findIndex(function (el) {
+          return el === current;
+        }) + 1;
+        selector = "".concat(tag, ":nth-child(").concat(index, ")");
+      } else {
+        selector = className;
+      }
+      segments.unshift(selector);
+      current = current.parentElement;
+    }
+
+    // 处理根元素
+    if (current === document.documentElement) {
+      segments.unshift('html');
+    }
+    return segments.join(' > ');
+  }
+
+  // 获取元素文本内容
+  function getElementText(element) {
+    var _element$textContent;
+    if (element.tagName === "INPUT") {
+      return element.value || element.placeholder || "";
+    }
+    if (element.tagName === "TEXTAREA") {
+      return element.value || element.placeholder || "";
+    }
+    var text = ((_element$textContent = element.textContent) === null || _element$textContent === void 0 ? void 0 : _element$textContent.trim()) || "";
+    return text.length > 50 ? text.substring(0, 50) + "..." : text;
+  }
+
+  // 获取元素属性信息
+  function getElementAttributes(element) {
+    var attrs = {};
+    for (var i = 0; i < element.attributes.length; i++) {
+      var attr = element.attributes[i];
+      attrs[attr.name] = attr.value;
+    }
+    return attrs;
+  }
+
+  // 鼠标悬停事件处理
+  function handleMouseOver(e) {
+    if (!highlightEnabled) return;
+    var target = e.target;
+    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
+      return;
+    }
+
+    // 避免高亮 html 和 body 元素
+    if (target === document.documentElement || target === document.body) {
+      return;
+    }
+
+    // 如果是已选中的元素，不显示悬停高亮
+    if (target === selectedElement) {
+      highlightBox.style.display = "none";
+      tagLabel.style.display = "none";
+      return;
+    }
+    var rect = target.getBoundingClientRect();
+    var selector = getElementSelector(target);
+    var text = getElementText(target);
+    var attributes = getElementAttributes(target);
+
+    // 更新悬停高亮框位置
+    highlightBox.style.display = "block";
+    highlightBox.style.left = "".concat(rect.left - 2, "px");
+    highlightBox.style.top = "".concat(rect.top - 2, "px");
+    highlightBox.style.width = "".concat(rect.width + 4, "px");
+    highlightBox.style.height = "".concat(rect.height + 4, "px");
+
+    // 更新标签位置和内容
+    tagLabel.style.display = "block";
+    tagLabel.textContent = "<".concat(target.tagName.toLowerCase(), ">");
+
+    // 计算标签位置，确保不超出视窗
+    var labelTop = rect.top - 22;
+    var labelLeft = rect.left;
+
+    // 如果标签会超出顶部，显示在元素下方
+    if (labelTop < 0) {
+      labelTop = rect.bottom + 5;
+    }
+
+    // 如果标签会超出右侧，向左调整
+    if (labelLeft + tagLabel.offsetWidth > window.innerWidth) {
+      labelLeft = window.innerWidth - tagLabel.offsetWidth - 5;
+    }
+    tagLabel.style.left = "".concat(Math.max(0, labelLeft), "px");
+    tagLabel.style.top = "".concat(labelTop, "px");
+
+    // 发送消息到父窗口
+    var elementInfo = {
+      tagName: target.tagName.toLowerCase(),
+      rect: {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+        x: rect.x,
+        y: rect.y
+      },
+      selector: selector,
+      text: text,
+      attributes: attributes,
+      url: window.location.href,
+      path: window.location.pathname,
+      timestamp: Date.now()
+    };
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-hover",
+        data: elementInfo,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 鼠标离开事件处理
+  function handleMouseOut(e) {
+    if (!highlightEnabled) return;
+    var relatedTarget = e.relatedTarget;
+
+    // 如果鼠标移动到高亮相关元素上，不隐藏高亮
+    if (relatedTarget && (relatedTarget === highlightBox || relatedTarget === tagLabel || relatedTarget === overlay || relatedTarget === selectedBox || relatedTarget === selectedLabel)) {
+      return;
+    }
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-hover",
+        data: null,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 点击事件处理
+  function handleClick(e) {
+    var target = e.target;
+    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
+      return;
+    }
+
+    // 避免处理 html 和 body 元素
+    if (target === document.documentElement || target === document.body) {
+      return;
+    }
+
+    // 检查是否是交互元素，这些元素需要保留默认行为
+    var isInteractiveElement = ['input', 'textarea', 'select', 'button', 'a'].includes(target.tagName.toLowerCase());
+
+    // 如果高亮功能启用，对于非交互元素阻止默认行为和事件传播
+    if (highlightEnabled) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    var rect = target.getBoundingClientRect();
+    var selector = getElementSelector(target);
+    var text = getElementText(target);
+    var attributes = getElementAttributes(target);
+    console.log("Element clicked:", {
+      tagName: target.tagName,
+      selector: selector,
+      rect: rect
+    });
+
+    // 立即更新选中高亮
+    updateSelectedHighlight(target);
+
+    // 隐藏悬停高亮，因为现在是选中状态
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    var elementInfo = {
+      tagName: target.tagName.toLowerCase(),
+      rect: {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+        x: rect.x,
+        y: rect.y
+      },
+      selector: selector,
+      text: text,
+      attributes: attributes,
+      url: window.location.href,
+      path: window.location.pathname,
+      timestamp: Date.now()
+    };
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-click",
+        data: elementInfo,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 监听来自父窗口的消息
+  function handleParentMessage(event) {
+    console.log("Received message from parent:", event.data);
+    if (event.data.type === "iframe-highlight-toggle") {
+      var enabled = event.data.enabled;
+      console.log("Highlight toggle:", enabled);
+      if (enabled) {
+        enableHighlight();
+      } else {
+        disableHighlight();
+      }
+    } else if (event.data.type === "enable-iframe-highlight") {
+      console.log("Enable iframe highlight");
+      enableHighlight();
+    } else if (event.data.type === "disable-iframe-highlight") {
+      console.log("Disable iframe highlight");
+      disableHighlight();
+    } else if (event.data.type === "toggle-iframe-highlight") {
+      var _enabled = event.data.enabled !== undefined ? event.data.enabled : !highlightEnabled;
+      console.log("Toggle iframe highlight to:", _enabled);
+      if (_enabled) {
+        enableHighlight();
+      } else {
+        disableHighlight();
+      }
+    } else if (event.data.type === "update-selected-element") {
+      var selector = event.data.selector;
+      console.log("Update selected element with selector:", selector);
+      if (selector) {
+        try {
+          var element = document.querySelector(selector);
+          console.log("Found element by selector:", element);
+          updateSelectedHighlight(element);
+        } catch (error) {
+          console.warn("Failed to select element:", error);
+          updateSelectedHighlight(null);
+        }
+      } else {
+        updateSelectedHighlight(null);
+      }
+    } else if (event.data.type === "clear-selected-element") {
+      console.log("Clear selected element");
+      updateSelectedHighlight(null);
+    }
+  }
+
+  // 启用高亮功能
+  function enableHighlight() {
+    console.log("Enabling highlight");
+    document.addEventListener("mouseover", handleMouseOver, true);
+    document.addEventListener("mouseout", handleMouseOut, true);
+    document.addEventListener("click", handleClick, true);
+    highlightEnabled = true;
+    overlay.style.display = "block";
+  }
+
+  // 禁用高亮功能
+  function disableHighlight() {
+    console.log("Disabling highlight");
+    highlightEnabled = false;
+    // 保持事件监听器，但通过 highlightEnabled 变量控制行为
+    // 这样可以保留选中状态的显示
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    // 不隐藏 selectedBox 和 selectedLabel，保留选中状态
+  }
+
+  // 完全禁用高亮功能（移除所有监听器）
+  function fullyDisableHighlight() {
+    console.log("Fully disabling highlight");
+    highlightEnabled = false;
+    document.removeEventListener("mouseover", handleMouseOver, true);
+    document.removeEventListener("mouseout", handleMouseOut, true);
+    document.removeEventListener("click", handleClick, true);
+    overlay.style.display = "none";
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    selectedBox.style.display = "none";
+    selectedLabel.style.display = "none";
+  }
+
+  // 添加事件监听
+  enableHighlight();
+  window.addEventListener("message", handleParentMessage);
+
+  // 暴露全局函数供外部调用
+  window.__iframeHighlightControl = {
+    enable: enableHighlight,
+    disable: disableHighlight,
+    fullyDisable: fullyDisableHighlight,
+    isEnabled: function isEnabled() {
+      return highlightEnabled;
+    },
+    getSelectedElement: function getSelectedElement() {
+      return selectedElement;
+    },
+    updateSelected: updateSelectedHighlight,
+    // 通过消息发送开关控制
+    sendToggleMessage: function sendToggleMessage(enabled) {
+      window.parent.postMessage({
+        type: 'iframe-highlight-status',
+        enabled: enabled || highlightEnabled,
+        source: 'iframe-highlight-injector'
+      }, '*');
+    }
+  };
+
+  // 通知父窗口脚本已加载
+  try {
+    window.parent.postMessage({
+      type: "iframe-highlight-ready",
+      data: {
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        timestamp: Date.now()
+      },
+      source: "iframe-highlight-injector"
+    }, "*");
+  } catch (error) {
+    console.warn("无法发送就绪消息到父窗口:", error);
+  }
+
+  // 清理函数
+  window.__iframeHighlightCleanup = function () {
+    fullyDisableHighlight();
+    window.removeEventListener("message", handleParentMessage);
+    if (overlay.parentElement) {
+      overlay.parentElement.removeChild(overlay);
+    }
+    delete window.__iframeHighlightInitialized;
+    delete window.__iframeHighlightCleanup;
+  };
+})();
+
+</script>
+</body>
+</html>
